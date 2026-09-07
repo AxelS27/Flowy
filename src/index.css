@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  ::selection {
+    background-color: #CCFBF1;
+    color: #0F766E;
+  }
+
+  /* Custom Playful Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #FFFDF9;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #EDE7DE;
+    border-radius: 999px;
+    border: 2px solid #FFFDF9;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D8D1C5;
+  }
+}
