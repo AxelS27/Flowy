@@ -45,7 +45,7 @@ const electronAPI = {
   },
 
   // Voice Simulation & Execution
-  simulateWakeWord: () => ipcRenderer.send("voice:simulate-wake"),
+  simulateWakeWord: (routine?: Routine) => ipcRenderer.send("voice:simulate-wake", routine),
   runRoutine: (routineId: string) => ipcRenderer.send("routine:run", routineId),
   cancelRoutine: () => ipcRenderer.send("routine:cancel"),
 

@@ -42,6 +42,10 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
   const exitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const celebrationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Scroll references for auto-scrolling checklist items
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const stepItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
   const state = externalState !== undefined ? externalState : internalState;
 
   const setState = (s: IslandState) => {
@@ -138,7 +142,29 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
     }
   }, [state, currentStepIndex, activeRoutine]);
 
-  const currentDim = stateDimensions[state] || stateDimensions.idle;
+  // Auto-scroll list to keep active running step visible
+  useEffect(() => {
+    if (state === "executing" && stepItemRefs.current[currentStepIndex]) {
+      stepItemRefs.current[currentStepIndex]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [currentStepIndex, state]);
+
+  // Dynamic island height based on routine steps count
+  const getExecutingHeight = () => {
+    const stepCount = activeRoutine?.steps.length || 0;
+    if (stepCount <= 1) return 150;
+    if (stepCount === 2) return 180;
+    if (stepCount === 3) return 210;
+    return 235; // optimal height for 4+ steps with scrolling
+  };
+
+  const currentDim = {
+    ...stateDimensions[state],
+    height: state === "executing" ? getExecutingHeight() : stateDimensions[state].height,
+  };
 
   return (
     <div
@@ -261,7 +287,7 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
               className="w-full p-4 flex flex-col justify-between h-full"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-1.5">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-1.5 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="text-base">{activeRoutine?.icon || "⚡"}</span>
                   <h4 className="text-xs font-black text-white truncate max-w-[200px]">
@@ -273,21 +299,29 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
                 </span>
               </div>
 
-              {/* Checklist Items */}
-              <div className="flex flex-col gap-1.5 overflow-hidden">
-                {(activeRoutine?.steps || []).slice(0, 3).map((step: RoutineStep, idx: number) => {
+              {/* Scrollable Checklist Items: All steps rendered with auto-scroll! */}
+              <div
+                ref={listRef}
+                className="flex-1 flex flex-col gap-1.5 overflow-y-auto pr-1 my-1 max-h-[135px] scroll-smooth"
+                style={{
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "#334155 transparent",
+                }}
+              >
+                {(activeRoutine?.steps || []).map((step: RoutineStep, idx: number) => {
                   const isDone = completedSteps.includes(idx);
                   const isCurrent = currentStepIndex === idx;
 
                   return (
                     <motion.div
                       key={step.id}
+                      ref={(el) => (stepItemRefs.current[idx] = el)}
                       layout
-                      className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-xl border transition-all ${
+                      className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-xl border flex-shrink-0 transition-all ${
                         isDone
                           ? "bg-slate-800/80 border-mint/40 text-slate-200"
                           : isCurrent
-                          ? "bg-slate-800 border-sunny text-white font-bold"
+                          ? "bg-slate-800 border-sunny text-white font-bold ring-1 ring-sunny/30"
                           : "bg-slate-900/40 border-slate-800 text-slate-500"
                       }`}
                     >
@@ -310,7 +344,7 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
               </div>
 
               {/* Bottom status bar */}
-              <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1.5">
+              <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1.5 flex-shrink-0">
                 <motion.div
                   className="bg-mint h-full rounded-full"
                   initial={{ width: "0%" }}

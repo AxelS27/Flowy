@@ -36,10 +36,9 @@ export function App() {
   const autoResetTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activateTimer1 = useRef<NodeJS.Timeout | null>(null);
   const activateTimer2 = useRef<NodeJS.Timeout | null>(null);
-  const isSimulatingVoiceRef = useRef<boolean>(false);
 
-  // Check if this window was opened as the standalone Island overlay
-  const isIslandOverlayWindow = window.location.hash === "#/island";
+  // Check if this window was opened as the standalone Island overlay (supports both #island and #/island)
+  const isIslandOverlayWindow = window.location.hash.includes("island");
 
   // Save routines to localStorage on update
   useEffect(() => {
@@ -79,39 +78,34 @@ export function App() {
     if (!api) return;
 
     const cleanupWake = api.onWakeDetected?.(() => {
-      if (!isSimulatingVoiceRef.current && islandState === "idle") {
-        handleSimulateVoice();
-      }
+      handleSimulateVoice();
     });
 
     // If this window is the standalone floating island, listen to activate events
     const cleanupActivate = api.onIslandActivate?.((incomingRoutine: Routine | null) => {
-      const routine = incomingRoutine || routines[0];
+      const routine = incomingRoutine || routines.find((r) => r.enabled) || routines[0];
       setActiveRoutine(routine);
-      setRunningRoutineId(routine.id);
+      setRunningRoutineId(routine?.id || null);
       setIslandState("listening");
 
       if (activateTimer1.current) clearTimeout(activateTimer1.current);
       if (activateTimer2.current) clearTimeout(activateTimer2.current);
 
-      activateTimer1.current = setTimeout(() => setIslandState("thinking"), 1200);
-      activateTimer2.current = setTimeout(() => setIslandState("executing"), 2200);
+      activateTimer1.current = setTimeout(() => setIslandState("thinking"), 1400);
+      activateTimer2.current = setTimeout(() => setIslandState("executing"), 2500);
     });
 
     // Listen to global island status changes from main process (broadcasted to mainWindow)
     const cleanupStatus = api.onIslandStatus?.((status: { isBusy: boolean; routine?: Routine }) => {
       if (status.isBusy) {
-        if (!isSimulatingVoiceRef.current) {
-          setIslandState("executing");
-          if (status.routine) {
-            setActiveRoutine(status.routine);
-            setRunningRoutineId(status.routine.id);
-          }
+        setIslandState("executing");
+        if (status.routine) {
+          setActiveRoutine(status.routine);
+          setRunningRoutineId(status.routine.id);
         }
       } else {
         setIslandState("idle");
         setRunningRoutineId(null);
-        isSimulatingVoiceRef.current = false;
       }
     });
 
@@ -124,17 +118,14 @@ export function App() {
 
   // Simulate Voice Trigger Flow: "Hey Flowy" -> Listen -> Intent -> Execute
   const handleSimulateVoice = () => {
-    if (isSimulatingVoiceRef.current || islandState !== "idle") return;
-    isSimulatingVoiceRef.current = true;
-
     const target = routines.find((r) => r.enabled) || routines[0];
     setActiveRoutine(target);
-    setRunningRoutineId(target.id);
+    setRunningRoutineId(target?.id || null);
     setIslandState("listening");
 
     const api = (window as any).electronAPI;
     if (api?.simulateWakeWord) {
-      api.simulateWakeWord();
+      api.simulateWakeWord(target);
     }
 
     if (activateTimer1.current) clearTimeout(activateTimer1.current);
@@ -149,12 +140,11 @@ export function App() {
       setIslandState("executing");
     }, 2500);
 
-    const stepCount = target.steps.length || 3;
+    const stepCount = target?.steps?.length || 3;
     const estimatedTotalMs = 2500 + stepCount * 650 + 2000;
     autoResetTimerRef.current = setTimeout(() => {
       setIslandState("idle");
       setRunningRoutineId(null);
-      isSimulatingVoiceRef.current = false;
     }, estimatedTotalMs);
   };
 

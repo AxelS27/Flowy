@@ -84,7 +84,7 @@ function createIslandWindow(): BrowserWindow {
   const { width } = primaryDisplay.workAreaSize;
 
   const islandWidth = 500;
-  const islandHeight = 260;
+  const islandHeight = 320;
 
   islandWindow = new BrowserWindow({
     width: islandWidth,
@@ -199,17 +199,17 @@ ipcMain.on("island:resize", (_event, { width, height }) => {
 });
 
 // IPC Handlers: Simulation & Routine Execution
-ipcMain.on("voice:simulate-wake", () => {
+ipcMain.on("voice:simulate-wake", (_event, routineData) => {
   const win = createIslandWindow();
 
   if (win && !win.isDestroyed()) {
     win.show();
     if (win.webContents.isLoading()) {
       win.webContents.once("did-finish-load", () => {
-        safeSend(win, "island:activate", null);
+        safeSend(win, "island:activate", routineData);
       });
     } else {
-      safeSend(win, "island:activate", null);
+      safeSend(win, "island:activate", routineData);
     }
   }
 });
