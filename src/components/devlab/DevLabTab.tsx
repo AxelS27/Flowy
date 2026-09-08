@@ -1,8 +1,8 @@
 import { FC, useState } from "react";
 import { Sparkles, Mic, Terminal, Play, CheckCircle2, RefreshCw } from "lucide-react";
-import { Routine } from "../data/mockRoutines";
-import { PushButton } from "./PushButton";
-import { sound } from "../utils/soundEffects";
+import { Routine } from "../../types";
+import { PushButton } from "../common/PushButton";
+import { sound } from "../../utils/soundEffects";
 
 interface DevLabTabProps {
   routines: Routine[];

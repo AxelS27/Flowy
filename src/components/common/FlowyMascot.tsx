@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import { motion } from "framer-motion";
-import { sound } from "../utils/soundEffects";
-import { fireStarBurst } from "../utils/confetti";
+import { sound } from "../../utils/soundEffects";
+import { fireStarBurst } from "../../utils/confetti";
 
 export type MascotState = "idle" | "listening" | "thinking" | "tinkering" | "celebrating";
 

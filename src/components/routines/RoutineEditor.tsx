@@ -18,10 +18,10 @@ import {
   Puzzle,
   X,
 } from "lucide-react";
-import { Routine, RoutineStep, ActionType, RoutineColor } from "../data/mockRoutines";
-import { PushButton } from "./PushButton";
-import { sound } from "../utils/soundEffects";
-import { fireCelebrationConfetti } from "../utils/confetti";
+import { Routine, RoutineStep, ActionType, RoutineColor } from "../../types";
+import { PushButton } from "../common/PushButton";
+import { sound } from "../../utils/soundEffects";
+import { fireCelebrationConfetti } from "../../utils/confetti";
 
 interface RoutineEditorProps {
   routine: Routine;

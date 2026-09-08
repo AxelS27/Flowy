@@ -1,8 +1,8 @@
 import { FC } from "react";
 import { motion } from "framer-motion";
 import { Play, Flame, Sliders, Trash2 } from "lucide-react";
-import { Routine } from "../data/mockRoutines";
-import { PushButton } from "./PushButton";
+import { Routine } from "../../types";
+import { PushButton } from "../common/PushButton";
 
 interface RoutineCardProps {
   routine: Routine;

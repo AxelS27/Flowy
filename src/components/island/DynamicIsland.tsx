@@ -1,11 +1,9 @@
 import { FC, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Sparkles, CheckCircle2, Loader2, Play } from "lucide-react";
-import { Routine, RoutineStep } from "../data/mockRoutines";
-import { sound } from "../utils/soundEffects";
-import { fireCelebrationConfetti } from "../utils/confetti";
-
-export type IslandState = "idle" | "listening" | "thinking" | "executing" | "completed";
+import { Routine, RoutineStep, IslandState } from "../../types";
+import { sound } from "../../utils/soundEffects";
+import { fireCelebrationConfetti } from "../../utils/confetti";
 
 interface DynamicIslandProps {
   activeRoutine?: Routine | null;

@@ -10,9 +10,9 @@ import {
   ArrowRight,
   Zap,
 } from "lucide-react";
-import { FlowyMascot, MascotState } from "./FlowyMascot";
-import { Routine } from "../data/mockRoutines";
-import { sound } from "../utils/soundEffects";
+import { FlowyMascot, MascotState } from "../common/FlowyMascot";
+import { Routine } from "../../types";
+import { sound } from "../../utils/soundEffects";
 
 interface LandingPageProps {
   onNavigate: (tab: "routines" | "lab") => void;

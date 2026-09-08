@@ -1,24 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
+import { Routine, IslandStatusData, RoutineStep } from "./types";
 
-export interface RoutineStep {
-  id: string;
-  type: "audio" | "app" | "web" | "powershell" | "focus";
-  title: string;
-  param: string;
-  proScript?: string;
-  delayMs?: number;
-}
-
-export interface Routine {
-  id: string;
-  name: string;
-  icon: string;
-  color: "strawberry" | "mint" | "sunny" | "blueberry" | "grape";
-  triggers: string[];
-  steps: RoutineStep[];
-  enabled: boolean;
-  streakCount?: number;
-}
+export type { Routine, RoutineStep, IslandStatusData };
 
 const electronAPI = {
   // Window management
@@ -38,7 +21,7 @@ const electronAPI = {
     return () => ipcRenderer.removeListener("island:activate", handler);
   },
 
-  onIslandStatus: (callback: (status: { isBusy: boolean; routine?: Routine }) => void) => {
+  onIslandStatus: (callback: (status: IslandStatusData) => void) => {
     const handler = (_: any, status: any) => callback(status);
     ipcRenderer.on("island:status", handler);
     return () => ipcRenderer.removeListener("island:status", handler);

@@ -1,5 +1,5 @@
 import React, { FC, ReactNode } from "react";
-import { sound } from "../utils/soundEffects";
+import { sound } from "../../utils/soundEffects";
 
 export interface PushButtonProps {
   children: ReactNode;
