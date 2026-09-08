@@ -236,7 +236,7 @@ export function MainAppView() {
             <div className="flex items-center justify-between pb-3 border-b-2 border-dashed border-cream-border">
               <button
                 onClick={() => {
-                  playSound("playPop");
+                  sound.playPop(480);
                   setActiveScreen("home");
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-cream-card hover:bg-cream border-2 border-cream-border font-extrabold text-xs text-ink transition-all active:translate-y-0.5 shadow-sm"
