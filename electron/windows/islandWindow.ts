@@ -6,6 +6,7 @@ import {
   getMainWindow,
   safeSend,
   isDev,
+  restrictRendererNavigation,
 } from "./windowManager";
 
 let isIslandBusy = false;
@@ -69,6 +70,7 @@ export function createIslandWindow(): BrowserWindow {
   });
 
   setIslandWindow(win);
+  restrictRendererNavigation(win);
 
   win.setAlwaysOnTop(true, "screen-saver");
 

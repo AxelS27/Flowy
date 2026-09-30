@@ -16,12 +16,18 @@ import {
   Plus,
   AlertCircle,
   Puzzle,
+  Folder,
+  Clipboard,
+  Clock,
+  Monitor,
   X,
 } from "lucide-react";
 import { Routine, RoutineStep, ActionType, RoutineColor } from "../../types";
 import { PushButton } from "../common/PushButton";
 import { sound } from "../../utils/soundEffects";
 import { fireCelebrationConfetti } from "../../utils/confetti";
+import { PALETTE_BLOCKS, PaletteBlock } from "../../data/actionCatalog";
+import { ActionFields } from "./ActionFields";
 
 interface RoutineEditorProps {
   routine: Routine;
@@ -33,129 +39,23 @@ interface RoutineEditorProps {
   existingRoutines: Routine[];
 }
 
-interface PaletteBlock {
-  type: ActionType;
-  title: string;
-  subtitle: string;
-  defaultParam: string;
-  defaultScript?: string;
-  category: ActionType;
-}
-
 const PALETTE_SECTIONS = [
-  {
-    id: "audio" as ActionType,
-    title: "Audio and Volume",
-    subtitle: "Volume and Mute Controls",
-    icon: Volume2,
-  },
-  {
-    id: "app" as ActionType,
-    title: "Apps and Windows",
-    subtitle: "Launch and Close Apps",
-    icon: AppWindow,
-  },
-  {
-    id: "web" as ActionType,
-    title: "Web Workspace",
-    subtitle: "URLs and Browser Tabs",
-    icon: Globe,
-  },
-  {
-    id: "focus" as ActionType,
-    title: "Focus Assist",
-    subtitle: "Do Not Disturb Modes",
-    icon: Sliders,
-  },
-  {
-    id: "powershell" as ActionType,
-    title: "PowerShell Scripts",
-    subtitle: "Scripts and System Lock",
-    icon: Terminal,
-  },
-];
-
-const PALETTE_BLOCKS: PaletteBlock[] = [
-  // Audio & Volume
-  {
-    type: "audio",
-    category: "audio",
-    title: "Set Volume",
-    subtitle: "Adjust speaker level",
-    defaultParam: "30",
-    defaultScript: "Set-AudioEndpointVolume -Level 30",
-  },
-  {
-    type: "audio",
-    category: "audio",
-    title: "Mute or Unmute",
-    subtitle: "Select mute option",
-    defaultParam: "mute_mic",
-    defaultScript: "Set-AudioEndpointMute -Endpoint Microphone -State $true",
-  },
-  // Apps & Launchers
-  {
-    type: "app",
-    category: "app",
-    title: "Launch App",
-    subtitle: "Open installed Windows app",
-    defaultParam: "code.exe",
-    defaultScript: "Start-Process 'code.exe'",
-  },
-  {
-    type: "app",
-    category: "app",
-    title: "Close Process",
-    subtitle: "Gracefully quit application",
-    defaultParam: "discord.exe",
-    defaultScript: "Stop-Process -Name 'Discord' -ErrorAction SilentlyContinue",
-  },
-  // Web Workspace
-  {
-    type: "web",
-    category: "web",
-    title: "Open Website URL",
-    subtitle: "Launch URL in browser",
-    defaultParam: "https://github.com",
-    defaultScript: "Start-Process 'https://github.com'",
-  },
-  {
-    type: "web",
-    category: "web",
-    title: "Open Workspace Tab",
-    subtitle: "Open project board",
-    defaultParam: "https://notion.so",
-    defaultScript: "Start-Process 'https://notion.so'",
-  },
-  // Focus Assist
-  {
-    type: "focus",
-    category: "focus",
-    title: "Focus Assist",
-    subtitle: "Do Not Disturb options",
-    defaultParam: "PriorityOnly",
-    defaultScript: "Set-WindowsFocusAssist -Mode PriorityOnly",
-  },
-  // PowerShell Scripting
-  {
-    type: "powershell",
-    category: "powershell",
-    title: "PowerShell Script",
-    subtitle: "Execute custom command",
-    defaultParam: "custom",
-    defaultScript: "Write-Output 'Flowy script executed successfully'",
-  },
-  {
-    type: "powershell",
-    category: "powershell",
-    title: "Lock Workstation",
-    subtitle: "Lock Windows screen",
-    defaultParam: "lock",
-    defaultScript: "rundll32.exe user32.dll,LockWorkStation",
-  },
+  { id: "audio" as ActionType, title: "Audio and Volume", subtitle: "Speaker volume and microphone mute", icon: Volume2 },
+  { id: "app" as ActionType, title: "Apps", subtitle: "Open and close applications", icon: AppWindow },
+  { id: "web" as ActionType, title: "Web Workspace", subtitle: "Websites and search", icon: Globe },
+  { id: "file" as ActionType, title: "Files and Folders", subtitle: "Open, create, organize and recycle", icon: Folder },
+  { id: "clipboard" as ActionType, title: "Clipboard", subtitle: "Reusable text", icon: Clipboard },
+  { id: "utility" as ActionType, title: "Timing and Messages", subtitle: "Wait, notify and confirm", icon: Clock },
+  { id: "system" as ActionType, title: "Computer", subtitle: "Lock and power controls", icon: Monitor },
+  { id: "focus" as ActionType, title: "Focus Assist", subtitle: "Temporarily skipped during execution", icon: Sliders },
+  { id: "powershell" as ActionType, title: "Advanced", subtitle: "Custom PowerShell scripts", icon: Terminal },
 ];
 
 const categoryTheme: Record<ActionType, { bg: string; border: string; text: string; light: string; icon: any }> = {
+  file: { bg: "bg-mint", border: "border-mint-dark", text: "text-mint-dark", light: "bg-mint-light", icon: Folder },
+  clipboard: { bg: "bg-blueberry", border: "border-blueberry-dark", text: "text-blueberry-dark", light: "bg-blueberry-light", icon: Clipboard },
+  utility: { bg: "bg-sunny", border: "border-sunny-dark", text: "text-amber-700", light: "bg-sunny-light", icon: Clock },
+  system: { bg: "bg-grape", border: "border-grape-dark", text: "text-grape-dark", light: "bg-grape-light", icon: Monitor },
   audio: { bg: "bg-strawberry", border: "border-strawberry-dark", text: "text-strawberry", light: "bg-strawberry-light", icon: Volume2 },
   app: { bg: "bg-mint", border: "border-mint-dark", text: "text-mint-dark", light: "bg-mint-light", icon: AppWindow },
   web: { bg: "bg-blueberry", border: "border-blueberry-dark", text: "text-blueberry-dark", light: "bg-blueberry-light", icon: Globe },
@@ -201,8 +101,13 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
   // Pipeline Steps
   const [steps, setSteps] = useState<RoutineStep[]>([...routine.steps]);
   const [isTestRunning, setIsTestRunning] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [paletteSearch, setPaletteSearch] = useState("");
+  const runningRef = useRef(false);
+  const activeRunIdRef = useRef<string | null>(null);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(-1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [skippedSteps, setSkippedSteps] = useState<Record<number, string>>({});
   const [expandedProSteps, setExpandedProSteps] = useState<Record<string, boolean>>({});
 
   // Palette Layer Navigation: null = Layer 1 (Categories Directory), ActionType = Layer 2 (Section Blocks)
@@ -288,6 +193,8 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
   const createStepFromTemplate = (template: PaletteBlock): RoutineStep => ({
     id: `step_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     type: template.type,
+    action: template.action,
+    secondaryParam: template.defaultSecondaryParam,
     title: template.title,
     subtitle: template.subtitle,
     param: template.defaultParam,
@@ -310,6 +217,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
   // REALTIME POINTER DRAG CONTROLLER (STAYS UNDER CURSOR!)
   // -------------------------------------------------------------
   const startDragFromPalette = (e: React.PointerEvent, template: PaletteBlock) => {
+    if (isTestRunning) return;
     e.preventDefault();
     sound.playPop(600);
     setCursorPos({ x: e.clientX, y: e.clientY });
@@ -317,6 +225,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
   };
 
   const startDragFromBoard = (e: React.PointerEvent, step: RoutineStep, index: number) => {
+    if (isTestRunning) return;
     e.preventDefault();
     sound.playPop(580);
     setCursorPos({ x: e.clientX, y: e.clientY });
@@ -402,33 +311,53 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
     };
   }, [draggingPayload, dropSlotIndex]);
 
-  // Test Run Simulation
+  useEffect(() => () => {
+    if (activeRunIdRef.current) window.electronAPI?.cancelRoutine(activeRunIdRef.current);
+  }, []);
+
   const handleTestRun = async () => {
-    if (isTestRunning || steps.length === 0) return;
+    if (runningRef.current || steps.length === 0) return;
+    const api = window.electronAPI;
+    if (!api) {
+      setRunError("Open Flowy in the desktop app to execute Windows actions.");
+      return;
+    }
+    const runId = crypto.randomUUID();
+    activeRunIdRef.current = runId;
+    runningRef.current = true;
     setIsTestRunning(true);
-    setActiveStepIndex(0);
+    setRunError(null);
     setCompletedSteps([]);
-    sound.playWakeChime();
-
-    for (let i = 0; i < steps.length; i++) {
-      setActiveStepIndex(i);
-      sound.playMarimba(i);
-      await new Promise((res) => setTimeout(res, 650));
-      setCompletedSteps((prev) => [...prev, i]);
+    setSkippedSteps({});
+    const unsubscribe = api.onStepProgress((progress) => {
+      if (progress.runId !== runId) return;
+      if (progress.status === "running") setActiveStepIndex(progress.stepIndex);
+      if (progress.status === "skipped") {
+        setSkippedSteps((prev) => ({ ...prev, [progress.stepIndex]: progress.note || "Temporarily unavailable." }));
+      }
+      if (progress.status === "completed") {
+        setCompletedSteps((prev) => [...prev, progress.stepIndex]);
+        sound.playMarimba(progress.stepIndex);
+      }
+    });
+    try {
+      const result = await api.executeRoutine({ id: routine.id, steps, runId });
+      if (!result.success) {
+        setRunError(result.stepIndex !== undefined && result.stepIndex >= 0
+          ? `Block #${result.stepIndex + 1}: ${result.error}` : result.error || "Routine failed.");
+      } else {
+        sound.playFanfare();
+        fireCelebrationConfetti();
+      }
+    } catch (error) {
+      setRunError(error instanceof Error ? error.message : "Could not execute routine.");
+    } finally {
+      unsubscribe();
+      runningRef.current = false;
+      activeRunIdRef.current = null;
+      setActiveStepIndex(-1);
+      setIsTestRunning(false);
     }
-
-    setActiveStepIndex(-1);
-    setIsTestRunning(false);
-    sound.playFanfare();
-    fireCelebrationConfetti();
-
-    // Auto-clear "Done" badges a few seconds after running completes
-    if (doneResetTimerRef.current) {
-      clearTimeout(doneResetTimerRef.current);
-    }
-    doneResetTimerRef.current = setTimeout(() => {
-      setCompletedSteps([]);
-    }, 2500);
   };
 
   const handleSaveAll = () => {
@@ -821,14 +750,16 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                 Clear
               </PushButton>
 
-              {/* Run Routine Simulation */}
+              {isTestRunning && <PushButton variant="ghost" size="sm"
+                onClick={() => { if (activeRunIdRef.current) window.electronAPI?.cancelRoutine(activeRunIdRef.current); }}>Stop</PushButton>}
+              {/* Execute real Windows actions */}
               <PushButton
                 variant="sunny"
                 size="sm"
                 icon={<Play size={13} className={isTestRunning ? "animate-spin" : ""} />}
                 onClick={handleTestRun}
                 disabled={isTestRunning || steps.length === 0}
-                title="Run routine"
+                title="Run real actions on your computer"
               >
                 {isTestRunning ? "Running..." : "Run"}
               </PushButton>
@@ -847,6 +778,8 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
             </div>
           </div>
 
+          {runError && <div role="alert" className="px-5 py-3 bg-strawberry-light text-strawberry-dark text-xs font-bold border-b-2 border-strawberry-dark">{runError}</div>}
+          <div className="px-5 py-2 text-xs font-semibold text-ink-muted border-b border-cream-border">Run executes real actions. Deletes use Recycle Bin; power and custom script actions ask for confirmation.</div>
           {/* Playground Main Layout: Scratch Palette (Left) + Puzzle Assembly Line (Right) */}
           <div className="flex flex-1 overflow-hidden">
             {/* LEFT: Scratch Action Block Palette (~280px) */}
@@ -884,10 +817,15 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                 )}
               </AnimatePresence>
 
+              <label className="p-4 pb-0">
+                <span className="sr-only">Search blocks</span>
+                <input value={paletteSearch} onChange={(e) => setPaletteSearch(e.target.value)}
+                  placeholder="Search blocks..." className="w-full px-3 py-2 rounded-xl border-2 border-cream-border bg-cream text-xs font-bold text-ink focus:outline-none focus:border-mint" />
+              </label>
               {/* Scrollable Palette Content (Two-Layered Navigation) */}
               <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-between">
                 {/* LAYER 1: CATEGORIES DIRECTORY */}
-                {activePaletteSection === null ? (
+                {activePaletteSection === null && !paletteSearch.trim() ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between pb-1.5 border-b-2 border-dashed border-cream-border">
                       <div className="flex items-center gap-2">
@@ -946,6 +884,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                         onClick={() => {
                           sound.playPop(480);
                           setActivePaletteSection(null);
+                          setPaletteSearch("");
                         }}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-cream hover:bg-cream-dark border-2 border-cream-border text-xs font-black text-ink transition-all active:scale-95 shadow-sm"
                         title="Back to All Categories"
@@ -956,14 +895,19 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
 
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-black text-ink">
-                          {PALETTE_SECTIONS.find((s) => s.id === activePaletteSection)?.title}
+                          {paletteSearch.trim() ? "Search results" : PALETTE_SECTIONS.find((s) => s.id === activePaletteSection)?.title}
                         </span>
                       </div>
                     </div>
 
+                    {!PALETTE_BLOCKS.some((b) => paletteSearch.trim()
+                      ? `${b.title} ${b.subtitle}`.toLowerCase().includes(paletteSearch.trim().toLowerCase())
+                      : b.category === activePaletteSection) && <p role="status" className="text-xs font-bold text-ink-muted py-3">No matching blocks.</p>}
                     {/* Draggable Blocks inside this Category */}
                     <div className="space-y-2">
-                      {PALETTE_BLOCKS.filter((b) => b.category === activePaletteSection).map(
+                      {PALETTE_BLOCKS.filter((b) => paletteSearch.trim()
+                        ? `${b.title} ${b.subtitle}`.toLowerCase().includes(paletteSearch.trim().toLowerCase())
+                        : b.category === activePaletteSection).map(
                         (block, idx) => {
                           const theme = categoryTheme[block.type];
                           const IconComponent = theme.icon;
@@ -1004,7 +948,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
 
                 <div className="pt-4 border-t-2 border-dashed border-cream-border text-[11px] font-bold text-ink-muted">
                   <p>
-                    {activePaletteSection === null
+                    {activePaletteSection === null && !paletteSearch.trim()
                       ? "💡 Click any category above to open its action blocks!"
                       : "🧩 Drag any block from here and drop it into the pipeline!"}
                   </p>
@@ -1061,6 +1005,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                   const IconComponent = theme.icon;
                   const isCurrent = activeStepIndex === index;
                   const isCompleted = completedSteps.includes(index);
+                  const skipReason = skippedSteps[index];
                   const isProExpanded = expandedProSteps[step.id] || false;
                   const isSlotHere = dropSlotIndex === index && draggingPayload !== null;
 
@@ -1138,13 +1083,14 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                             {/* Right: Status badge & Pro Settings Toggle */}
                             <div className="flex items-center gap-2">
                               <AnimatePresence>
+                                {skipReason && <span title={skipReason} className="text-xs font-black text-amber-700 bg-sunny-light px-2.5 py-1 rounded-xl border border-sunny-dark">Skipped</span>}
                                 {isCompleted && !isCurrent && (
                                   <motion.span
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.8 }}
                                     transition={{ duration: 0.2 }}
-                                    className="inline-flex items-center gap-1 text-xs font-black text-mint bg-mint-light px-2.5 py-1 rounded-xl border border-mint-dark"
+                                    className="inline-flex items-center gap-1 text-xs font-black text-mint-dark bg-mint-light px-2.5 py-1 rounded-xl border border-mint-dark"
                                   >
                                     <CheckCircle2 size={13} /> Done
                                   </motion.span>
@@ -1157,24 +1103,27 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                                 </span>
                               )}
 
-                              <button
+                              {!step.action && <button
                                 onClick={() => toggleProTray(step.id)}
                                 className={`px-2.5 py-1 rounded-xl font-extrabold text-xs border transition-all ${
                                   isProExpanded
                                     ? "bg-slate-800 text-white border-slate-900"
                                     : "bg-cream hover:bg-cream-dark text-ink-muted border-cream-border"
                                 }`}
-                                title="Toggle Pro Settings (PowerShell script overrides & timing)"
+                                title="Legacy script reference and execution timing"
                               >
                                 {isProExpanded ? "Hide Pro ⚙️" : "Pro ⚙️"}
-                              </button>
+                              </button>}
                             </div>
                           </div>
 
                           {/* Inline Quick Parameter (Dropdowns or Slider) */}
                           <div className="mt-3 pt-2.5 border-t border-dashed border-cream-border flex items-center justify-between gap-4 text-xs font-bold text-ink">
                             {/* Option 1: Mute / Unmute Dropdown */}
-                            {step.type === "audio" &&
+                            {step.action ? (
+                              <fieldset disabled={isTestRunning} className="w-full"><ActionFields step={step} onChange={(changes) => setSteps((prev) =>
+                                prev.map((s) => s.id === step.id ? { ...s, ...changes } : s))} /></fieldset>
+                            ) : step.type === "audio" &&
                             (step.param === "mute_mic" ||
                               step.param === "unmute_mic" ||
                               step.param === "mute_audio" ||
@@ -1378,7 +1327,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                                       val === "lock"
                                         ? "rundll32.exe user32.dll,LockWorkStation"
                                         : val === "sleep"
-                                        ? "shutdown.exe /s /t 3600"
+                                        ? "# Sleep uses the native Windows power API"
                                         : '(Add-Type \'[DllImport("user32.dll")]public static extern int SendMessage(int hWnd, int hMsg, int wParam, int lParam);\' -Name a -Pas)::SendMessage(-1, 0x0112, 0xF170, 2)';
                                     setSteps((prev) =>
                                       prev.map((s) =>
@@ -1397,7 +1346,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                                   className="flex-1 px-3 py-1.5 rounded-xl bg-cream border border-cream-border text-xs font-black text-ink focus:outline-none focus:border-grape cursor-pointer"
                                 >
                                   <option value="lock">Lock Workstation</option>
-                                  <option value="sleep">Sleep Computer (60m Timer)</option>
+                                  <option value="sleep">Sleep Computer</option>
                                   <option value="display_off">Turn Screen Off</option>
                                 </select>
                               </div>
@@ -1409,7 +1358,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                                   type="range"
                                   min="0"
                                   max="100"
-                                  value={parseInt(step.param) || 30}
+                                  value={Number.isFinite(Number(step.param)) ? Number(step.param) : 30}
                                   onChange={(e) => {
                                     const val = e.target.value;
                                     setSteps((prev) =>
@@ -1445,7 +1394,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                           </div>
 
                           {/* Expandable Pro Settings Tray */}
-                          {isProExpanded && (
+                          {isProExpanded && !step.action && (
                             <motion.div
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: "auto" }}
@@ -1453,7 +1402,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                               className="mt-3 pt-3 border-t-2 border-dashed border-cream-border text-xs space-y-2"
                             >
                               <div className="flex items-center justify-between text-ink-muted font-bold">
-                                <span>PowerShell Script Override:</span>
+                                <span>{step.type === "powershell" && step.param === "custom" ? "Custom PowerShell script:" : "Legacy script reference (not executed):"}</span>
                                 <span className="font-mono text-[10px] text-grape-dark bg-grape-light px-2 py-0.5 rounded-lg border border-grape-dark">
                                   Pro Mode
                                 </span>

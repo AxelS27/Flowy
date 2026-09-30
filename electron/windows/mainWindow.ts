@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import path from "path";
-import { getMainWindow, setMainWindow, getIslandWindow, isDev } from "./windowManager";
+import { getMainWindow, setMainWindow, getIslandWindow, isDev, restrictRendererNavigation } from "./windowManager";
 
 export function createMainWindow(): BrowserWindow {
   const existing = getMainWindow();
@@ -24,6 +24,7 @@ export function createMainWindow(): BrowserWindow {
   });
 
   setMainWindow(win);
+  restrictRendererNavigation(win);
 
   if (isDev) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL!);

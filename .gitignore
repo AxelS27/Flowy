@@ -36,5 +36,9 @@ dist-electron/
 .DS_Store
 Thumbs.db
 
+# Test artifacts
+test-results/
+playwright-report/
+
 # Agent generated artifacts
 .pi/generated-images/

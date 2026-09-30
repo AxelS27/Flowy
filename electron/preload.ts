@@ -29,8 +29,9 @@ const electronAPI = {
 
   // Voice Simulation & Execution
   simulateWakeWord: (routine?: Routine) => ipcRenderer.send("voice:simulate-wake", routine),
-  runRoutine: (routineId: string) => ipcRenderer.send("routine:run", routineId),
-  cancelRoutine: () => ipcRenderer.send("routine:cancel"),
+  executeRoutine: (routine: { id: string; steps: RoutineStep[]; runId?: string }): Promise<{ success: boolean; runId: string; error?: string; code?: string; stepIndex?: number }> =>
+    ipcRenderer.invoke("routine:execute", routine),
+  cancelRoutine: (runId?: string) => ipcRenderer.send("routine:cancel", runId),
 
   // Listeners
   onWakeDetected: (callback: (data: { keyword: string }) => void) => {
@@ -41,9 +42,12 @@ const electronAPI = {
   onStepProgress: (
     callback: (data: {
       routineId: string;
+      runId: string;
+      error?: string;
       stepIndex: number;
       stepTitle: string;
-      status: "running" | "completed" | "failed";
+      status: "running" | "completed" | "failed" | "skipped";
+  note?: string;
     }) => void
   ) => {
     const handler = (_: any, data: any) => callback(data);
@@ -51,7 +55,7 @@ const electronAPI = {
     return () => ipcRenderer.removeListener("routine:step-progress", handler);
   },
   onRoutineFinished: (
-    callback: (data: { routineId: string; success: boolean }) => void
+    callback: (data: { routineId: string; runId: string; success: boolean; error?: string; code?: string }) => void
   ) => {
     const handler = (_: any, data: any) => callback(data);
     ipcRenderer.on("routine:finished", handler);

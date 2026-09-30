@@ -2,9 +2,11 @@ import { ipcMain, screen } from "electron";
 import { createIslandWindow, releaseIslandLock } from "../windows/islandWindow";
 import { getIslandWindow, getMainWindow, safeSend } from "../windows/windowManager";
 import { Routine } from "../types";
+import { isTrustedSender } from "./trust";
 
 export function registerIslandIpc() {
-  ipcMain.on("island:show", (_event, routineData?: Routine) => {
+  ipcMain.on("island:show", (event, routineData?: Routine) => {
+    if (!isTrustedSender(event)) return;
     const win = createIslandWindow();
 
     if (win && !win.isDestroyed()) {
@@ -21,7 +23,8 @@ export function registerIslandIpc() {
     safeSend(getMainWindow(), "island:status", { isBusy: true, routine: routineData });
   });
 
-  ipcMain.on("island:hide", () => {
+  ipcMain.on("island:hide", (event) => {
+    if (!isTrustedSender(event)) return;
     const win = getIslandWindow();
     if (win && !win.isDestroyed()) {
       win.hide();
@@ -29,7 +32,10 @@ export function registerIslandIpc() {
     releaseIslandLock();
   });
 
-  ipcMain.on("island:resize", (_event, { width, height }: { width: number; height: number }) => {
+  ipcMain.on("island:resize", (event, bounds: unknown) => {
+    if (!isTrustedSender(event) || !bounds || typeof bounds !== "object") return;
+    const { width, height } = bounds as { width?: unknown; height?: unknown };
+    if (typeof width !== "number" || typeof height !== "number" || !Number.isFinite(width) || !Number.isFinite(height) || width < 100 || width > 1000 || height < 30 || height > 800) return;
     const win = getIslandWindow();
     if (!win || win.isDestroyed()) return;
 
@@ -43,7 +49,8 @@ export function registerIslandIpc() {
     });
   });
 
-  ipcMain.on("voice:simulate-wake", (_event, routineData?: Routine) => {
+  ipcMain.on("voice:simulate-wake", (event, routineData?: Routine) => {
+    if (!isTrustedSender(event)) return;
     const win = createIslandWindow();
 
     if (win && !win.isDestroyed()) {

@@ -1,14 +1,20 @@
-import { Routine } from "./routine";
+import { Routine, RoutineStep } from "./routine";
 
 export interface StepProgressData {
   routineId: string;
+  runId: string;
+  error?: string;
   stepIndex: number;
   stepTitle: string;
-  status: "running" | "completed" | "failed";
+  status: "running" | "completed" | "failed" | "skipped";
+  note?: string;
 }
 
 export interface RoutineFinishedData {
   routineId: string;
+  runId: string;
+  error?: string;
+  code?: string;
   success: boolean;
 }
 
@@ -32,8 +38,8 @@ export interface ElectronAPI {
 
   // Voice Simulation & Execution
   simulateWakeWord: (routine?: Routine) => void;
-  runRoutine: (routineId: string) => void;
-  cancelRoutine: () => void;
+  executeRoutine: (routine: { id: string; steps: RoutineStep[]; runId?: string }) => Promise<{ success: boolean; runId: string; error?: string; code?: string; stepIndex?: number }>;
+  cancelRoutine: (runId?: string) => void;
 
   // Listeners
   onWakeDetected: (callback: (data: { keyword: string }) => void) => () => void;

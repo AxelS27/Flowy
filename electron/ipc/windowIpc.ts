@@ -1,12 +1,15 @@
 import { ipcMain } from "electron";
 import { getMainWindow } from "../windows/windowManager";
+import { isTrustedSender } from "./trust";
 
 export function registerWindowIpc() {
-  ipcMain.on("window:minimize", () => {
+  ipcMain.on("window:minimize", (event) => {
+    if (!isTrustedSender(event)) return;
     getMainWindow()?.minimize();
   });
 
-  ipcMain.on("window:maximize", () => {
+  ipcMain.on("window:maximize", (event) => {
+    if (!isTrustedSender(event)) return;
     const win = getMainWindow();
     if (win?.isMaximized()) {
       win.unmaximize();
@@ -15,7 +18,8 @@ export function registerWindowIpc() {
     }
   });
 
-  ipcMain.on("window:close", () => {
+  ipcMain.on("window:close", (event) => {
+    if (!isTrustedSender(event)) return;
     getMainWindow()?.close();
   });
 }

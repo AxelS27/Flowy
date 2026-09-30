@@ -1,6 +1,6 @@
 export type RoutineCategory = "work" | "gaming" | "study" | "chill" | "system";
 export type RoutineColor = "strawberry" | "mint" | "sunny" | "blueberry" | "grape";
-export type ActionType = "audio" | "app" | "web" | "powershell" | "focus";
+export type ActionType = "audio" | "app" | "web" | "powershell" | "focus" | "file" | "clipboard" | "utility" | "system";
 
 export interface RoutineStep {
   id: string;
@@ -8,6 +8,9 @@ export interface RoutineStep {
   title: string;
   subtitle?: string;
   param: string;
+  /** Stable action identifier. Older routines are resolved by type/title. */
+  action?: string;
+  secondaryParam?: string;
   proScript?: string;
   delayMs?: number;
 }

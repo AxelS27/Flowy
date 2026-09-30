@@ -30,7 +30,7 @@ export function MainAppView() {
     toggleRoutine,
   } = useRoutines();
 
-  const { isMuted, toggleMute, playSound } = useSoundEffect();
+  const { isMuted, toggleMute } = useSoundEffect();
 
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [activeScreen, setActiveScreen] = useState<AppScreen>("home");
@@ -38,6 +38,7 @@ export function MainAppView() {
   // Dynamic Island & Voice State
   const [islandState, setIslandState] = useState<IslandState>("idle");
   const [runningRoutineId, setRunningRoutineId] = useState<string | null>(null);
+  const runningRoutineIdRef = useRef<string | null>(null);
   const [activeRoutine, setActiveRoutine] = useState<Routine | null>(null);
   const [mascotState, setMascotState] = useState<MascotState>("idle");
 
@@ -66,6 +67,7 @@ export function MainAppView() {
     const target = routines.find((r) => r.enabled) || routines[0];
     setActiveRoutine(target);
     setRunningRoutineId(target?.id || null);
+    runningRoutineIdRef.current = target?.id || null;
     setIslandState("listening");
 
     const api = window.electronAPI;
@@ -85,6 +87,7 @@ export function MainAppView() {
       setIslandState("executing");
     }, 2500);
 
+    if (api) return;
     const stepCount = target?.steps?.length || 3;
     const estimatedTotalMs = 2500 + stepCount * 650 + 2000;
     autoResetTimerRef.current = setTimeout(() => {
@@ -114,14 +117,27 @@ export function MainAppView() {
         if (status.routine) {
           setActiveRoutine(status.routine);
           setRunningRoutineId(status.routine.id);
+          runningRoutineIdRef.current = status.routine.id;
         }
       } else {
         setIslandState("idle");
         setRunningRoutineId(null);
+        runningRoutineIdRef.current = null;
       }
     });
 
+    const cleanupFinished = api.onRoutineFinished((result) => {
+      if (result.routineId !== runningRoutineIdRef.current) return;
+      setIslandState(result.success ? "completed" : "failed");
+      if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
+      autoResetTimerRef.current = setTimeout(() => {
+        setIslandState("idle");
+        setRunningRoutineId(null);
+      }, 4000);
+    });
+
     return () => {
+      cleanupFinished();
       cleanupWake?.();
       cleanupStatus?.();
       if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
@@ -134,6 +150,7 @@ export function MainAppView() {
   const handleRunRoutine = (routine: Routine) => {
     setActiveRoutine(routine);
     setRunningRoutineId(routine.id);
+    runningRoutineIdRef.current = routine.id;
     setIslandState("executing");
 
     const api = window.electronAPI;
@@ -142,6 +159,7 @@ export function MainAppView() {
     }
 
     if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
+    if (api) return;
     const stepCount = routine.steps.length || 3;
     const estimatedTotalMs = stepCount * 650 + 2500;
     autoResetTimerRef.current = setTimeout(() => {
@@ -183,15 +201,7 @@ export function MainAppView() {
       triggers: [],
       enabled: true,
       streakCount: 0,
-      steps: [
-        {
-          id: `step_${Date.now()}_1`,
-          type: "audio",
-          title: "Set Volume",
-          subtitle: "Level: 40%",
-          param: "40",
-        },
-      ],
+      steps: [],
     };
     setEditingRoutine(newRoutine);
   };

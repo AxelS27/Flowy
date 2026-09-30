@@ -92,7 +92,7 @@ export const RoutineCard: FC<RoutineCardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            {routine.streakCount > 0 && (
+            {(routine.streakCount ?? 0) > 0 && (
               <span
                 className="inline-flex items-center gap-1 text-[11px] font-black text-amber-600 bg-sunny-light px-2 py-0.5 rounded-full border border-sunny-dark"
                 title={`${routine.streakCount} day automation streak!`}

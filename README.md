@@ -6,6 +6,14 @@ Flowy enables users to automate repetitive multi-step system and application rou
 
 ---
 
+## Everyday Action Blocks
+
+The desktop palette includes 27 blocks with backend handlers, including native Core Audio. Focus Assist / Do not disturb is temporarily skipped without stopping the routine or opening Windows Settings. See [block capabilities and safety](docs/BLOCKS.md) and [backend architecture](docs/BACKEND.md).
+
+- `npm run build` builds Electron, the Windows native helper, and the renderer.
+- `npm run typecheck` checks renderer and Electron types.
+- `npm test` builds and runs the Electron E2E suite.
+
 ## Project Documentation
 
 1. **[Windows Product Requirements Document (PRD)](docs/PRD_WINDOWS.md)**

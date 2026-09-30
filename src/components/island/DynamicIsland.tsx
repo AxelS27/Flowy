@@ -1,6 +1,6 @@
 import { FC, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Sparkles, CheckCircle2, Loader2, Play } from "lucide-react";
+import { Mic, Sparkles, CheckCircle2, Loader2, Play, SkipForward } from "lucide-react";
 import { Routine, RoutineStep, IslandState } from "../../types";
 import { sound } from "../../utils/soundEffects";
 import { fireCelebrationConfetti } from "../../utils/confetti";
@@ -21,6 +21,7 @@ const stateDimensions: Record<
   thinking: { width: 310, height: 46, borderRadius: 23 },
   executing: { width: 400, height: 180, borderRadius: 28 },
   completed: { width: 325, height: 48, borderRadius: 24 },
+  failed: { width: 400, height: 120, borderRadius: 24 },
 };
 
 export const DynamicIsland: FC<DynamicIslandProps> = ({
@@ -33,6 +34,9 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
   const [isExiting, setIsExiting] = useState<boolean>(false);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [skippedSteps, setSkippedSteps] = useState<Record<number, string>>({});
+  const [runError, setRunError] = useState("");
+  const activeRunIdRef = useRef<string | null>(null);
 
   // Timer references for robust cleanup and serialization
   const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -97,6 +101,8 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
     } else if (state === "executing") {
       setCurrentStepIndex(0);
       setCompletedSteps([]);
+      setSkippedSteps({});
+      setRunError("");
     } else if (state === "completed") {
       sound.playFanfare();
       fireCelebrationConfetti();
@@ -115,30 +121,60 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
     };
   }, [state]);
 
-  // Automated step progression when in "executing" mode (serialized)
+  // Execute in Electron; browser mode keeps an explicitly labelled visual preview.
   useEffect(() => {
     if (state !== "executing" || !activeRoutine) return;
-
-    if (currentStepIndex < activeRoutine.steps.length) {
+    const api = window.electronAPI;
+    if (!api) {
       stepTimerRef.current = setTimeout(() => {
-        setCompletedSteps((prev) => [...prev, currentStepIndex]);
-        sound.playMarimba(currentStepIndex);
-        setCurrentStepIndex((prev) => prev + 1);
+        if (currentStepIndex < activeRoutine.steps.length) {
+          setCompletedSteps((prev) => [...prev, currentStepIndex]);
+          setCurrentStepIndex((prev) => prev + 1);
+        } else setState("completed");
       }, 650);
-
-      return () => {
-        if (stepTimerRef.current) clearTimeout(stepTimerRef.current);
-      };
-    } else {
-      finishTimerRef.current = setTimeout(() => {
-        setState("completed");
-      }, 450);
-
-      return () => {
-        if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
-      };
+      return () => { if (stepTimerRef.current) clearTimeout(stepTimerRef.current); };
     }
+    // Whole-routine execution is handled by a separate effect, not re-started per block.
   }, [state, currentStepIndex, activeRoutine]);
+
+  useEffect(() => {
+    const api = window.electronAPI;
+    if (!api || state !== "executing" || !activeRoutine) return;
+    let mounted = true;
+    const runId = crypto.randomUUID();
+    activeRunIdRef.current = runId;
+    const unsubscribe = api.onStepProgress((progress) => {
+      if (progress.runId !== runId) return;
+      if (progress.status === "running") setCurrentStepIndex(progress.stepIndex);
+      if (progress.status === "skipped") {
+        setSkippedSteps((prev) => ({ ...prev, [progress.stepIndex]: progress.note || "Temporarily unavailable." }));
+        setCompletedSteps((prev) => [...prev, progress.stepIndex]);
+      }
+      if (progress.status === "completed") {
+        setCompletedSteps((prev) => [...prev, progress.stepIndex]);
+        sound.playMarimba(progress.stepIndex);
+      }
+    });
+    api.executeRoutine({ ...activeRoutine, runId }).then((result) => {
+      if (!mounted) return;
+      if (result.success) setState("completed");
+      else {
+        setRunError(result.error || "Routine failed.");
+        setState("failed");
+      }
+    }).catch((error) => {
+      if (mounted) {
+        setRunError(error instanceof Error ? error.message : "Could not run routine.");
+        setState("failed");
+      }
+    });
+    return () => {
+      mounted = false;
+      unsubscribe();
+      api.cancelRoutine(runId);
+      if (activeRunIdRef.current === runId) activeRunIdRef.current = null;
+    };
+  }, [state, activeRoutine]);
 
   // Auto-scroll list to keep active running step visible
   useEffect(() => {
@@ -289,9 +325,11 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
                 <div className="flex items-center gap-2">
                   <span className="text-base">{activeRoutine?.icon || "⚡"}</span>
                   <h4 className="text-xs font-black text-white truncate max-w-[200px]">
-                    {activeRoutine?.name || "Running Routine"}
+                    {!window.electronAPI ? "Preview: " : ""}{activeRoutine?.name || "Running Routine"}
                   </h4>
                 </div>
+                {window.electronAPI && <button className="text-[10px] font-bold text-strawberry px-2"
+                  onClick={() => { if (activeRunIdRef.current) window.electronAPI?.cancelRoutine(activeRunIdRef.current); }}>Stop</button>}
                 <span className="text-[10px] font-bold text-mint bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
                   {completedSteps.length} / {activeRoutine?.steps.length || 0}
                 </span>
@@ -308,6 +346,7 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
               >
                 {(activeRoutine?.steps || []).map((step: RoutineStep, idx: number) => {
                   const isDone = completedSteps.includes(idx);
+                  const skipReason = skippedSteps[idx];
                   const isCurrent = currentStepIndex === idx;
 
                   return (
@@ -316,7 +355,7 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
                       ref={(el) => (stepItemRefs.current[idx] = el)}
                       layout
                       className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-xl border flex-shrink-0 transition-all ${
-                        isDone
+                        skipReason ? "bg-slate-800/80 border-sunny/40 text-slate-200" : isDone
                           ? "bg-slate-800/80 border-mint/40 text-slate-200"
                           : isCurrent
                           ? "bg-slate-800 border-sunny text-white font-bold ring-1 ring-sunny/30"
@@ -324,7 +363,7 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
-                        {isDone ? (
+                        {skipReason ? <SkipForward size={14} className="text-sunny flex-shrink-0" /> : isDone ? (
                           <CheckCircle2 size={14} className="text-mint flex-shrink-0" />
                         ) : isCurrent ? (
                           <Loader2 size={14} className="text-sunny animate-spin flex-shrink-0" />
@@ -333,8 +372,8 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
                         )}
                         <span className="truncate">{step.title}</span>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400 flex-shrink-0">
-                        {isDone ? "Done" : isCurrent ? "Active" : "Queued"}
+                      <span title={skipReason} className={`text-[10px] font-mono flex-shrink-0 ${skipReason ? "text-sunny" : "text-slate-400"}`}>
+                        {skipReason ? "Skipped" : isDone ? "Done" : isCurrent ? "Active" : "Queued"}
                       </span>
                     </motion.div>
                   );
@@ -359,6 +398,14 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
             </motion.div>
           )}
 
+          {state === "failed" && (
+            <div role="alert" className="w-full p-4 text-left space-y-2">
+              <p className="text-xs font-black text-strawberry">Routine stopped</p>
+              <p className="text-xs text-white line-clamp-3">{runError}</p>
+              <button className="text-xs font-bold text-mint" onClick={() => setState("idle")}>Dismiss</button>
+            </div>
+          )}
+
           {/* STATE: COMPLETED */}
           {state === "completed" && (
             <motion.div
@@ -371,8 +418,8 @@ export const DynamicIsland: FC<DynamicIslandProps> = ({
             >
               <CheckCircle2 size={18} className="text-mint animate-bounce" />
               <div className="text-left">
-                <p className="text-xs font-black text-white">Routine Completed! 🎉</p>
-                <p className="text-[10px] font-bold text-slate-400">Workspace is ready!</p>
+                <p className="text-xs font-black text-white">{window.electronAPI ? "Routine Completed!" : "Preview Completed"}</p>
+                <p className="text-[10px] font-bold text-slate-400">{Object.keys(skippedSteps).length ? "Finished. Do not disturb was skipped." : "Workspace is ready!"}</p>
               </div>
             </motion.div>
           )}
