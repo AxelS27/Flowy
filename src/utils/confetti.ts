@@ -1,6 +1,11 @@
 import confetti from "canvas-confetti";
 
 export function fireCelebrationConfetti() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (window.electronAPI?.celebrate) {
+    window.electronAPI.celebrate();
+    return;
+  }
   try {
     // Starburst explosion from both bottom corners and center
     const colors = ["#FF5C8A", "#FFC837", "#2DD4BF", "#60A5FA", "#C084FC"];

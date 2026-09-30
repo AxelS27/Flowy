@@ -32,9 +32,15 @@ export interface ElectronAPI {
   // Dynamic Island
   showIsland: (routine?: Routine) => void;
   hideIsland: () => void;
+  setIslandInteractive: (interactive: boolean) => void;
   resizeIsland: (width: number, height: number) => void;
   onIslandActivate: (callback: (routine: Routine | null) => void) => () => void;
   onIslandStatus: (callback: (status: IslandStatusData) => void) => () => void;
+
+  // Full-desktop celebration overlay
+  celebrate: () => void;
+  celebrationReady: () => void;
+  onCelebrationStart: (callback: () => void) => () => void;
 
   // Voice Simulation & Execution
   simulateWakeWord: (routine?: Routine) => void;

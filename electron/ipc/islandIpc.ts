@@ -1,5 +1,5 @@
-import { ipcMain, screen } from "electron";
-import { createIslandWindow, releaseIslandLock } from "../windows/islandWindow";
+import { ipcMain } from "electron";
+import { createIslandWindow, releaseIslandLock, positionIslandWindow } from "../windows/islandWindow";
 import { getIslandWindow, getMainWindow, safeSend } from "../windows/windowManager";
 import { Routine } from "../types";
 import { isTrustedSender } from "./trust";
@@ -39,14 +39,14 @@ export function registerIslandIpc() {
     const win = getIslandWindow();
     if (!win || win.isDestroyed()) return;
 
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const screenWidth = primaryDisplay.workAreaSize.width;
-    win.setBounds({
-      x: Math.round((screenWidth - width) / 2),
-      y: 5,
-      width,
-      height,
-    });
+    positionIslandWindow(win, width, height);
+  });
+
+  ipcMain.on("island:interactive", (event, interactive: unknown) => {
+    if (!isTrustedSender(event) || typeof interactive !== "boolean") return;
+    const win = getIslandWindow();
+    if (!win || win.isDestroyed() || win.webContents.id !== event.sender.id) return;
+    win.setIgnoreMouseEvents(!interactive, { forward: true });
   });
 
   ipcMain.on("voice:simulate-wake", (event, routineData?: Routine) => {

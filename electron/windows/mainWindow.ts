@@ -1,5 +1,6 @@
 import { BrowserWindow } from "electron";
 import path from "path";
+import { closeCelebrationWindow } from "./celebrationWindow";
 import { getMainWindow, setMainWindow, getIslandWindow, isDev, restrictRendererNavigation } from "./windowManager";
 
 export function createMainWindow(): BrowserWindow {
@@ -37,6 +38,7 @@ export function createMainWindow(): BrowserWindow {
   });
 
   win.on("closed", () => {
+    closeCelebrationWindow();
     setMainWindow(null);
     const island = getIslandWindow();
     if (island && !island.isDestroyed()) {

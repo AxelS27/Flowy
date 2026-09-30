@@ -12,6 +12,7 @@ const electronAPI = {
   // Dynamic Island
   showIsland: (routine?: Routine) => ipcRenderer.send("island:show", routine),
   hideIsland: () => ipcRenderer.send("island:hide"),
+  setIslandInteractive: (interactive: boolean) => ipcRenderer.send("island:interactive", interactive),
   resizeIsland: (width: number, height: number) =>
     ipcRenderer.send("island:resize", { width, height }),
 
@@ -25,6 +26,15 @@ const electronAPI = {
     const handler = (_: any, status: any) => callback(status);
     ipcRenderer.on("island:status", handler);
     return () => ipcRenderer.removeListener("island:status", handler);
+  },
+
+  // Full-desktop, click-through celebration overlay
+  celebrate: () => ipcRenderer.send("celebration:show"),
+  celebrationReady: () => ipcRenderer.send("celebration:ready"),
+  onCelebrationStart: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on("celebration:start", handler);
+    return () => ipcRenderer.removeListener("celebration:start", handler);
   },
 
   // Voice Simulation & Execution
