@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .flowy-sky-accent {
+    background: #e8f7ff;
+    border: 2px solid #d3eaf5;
+    border-radius: 24px;
+    box-shadow: 0 4px 0 #deedf2;
+  }
+}
+
 @layer base {
   * {
     box-sizing: border-box;
@@ -19,16 +28,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #FFFDF9;
+    background: #F7F8FA;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #EDE7DE;
+    background: #E2E5EB;
     border-radius: 999px;
-    border: 2px solid #FFFDF9;
+    border: 2px solid #F7F8FA;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #D8D1C5;
+    background: #D1D6E0;
   }
 }

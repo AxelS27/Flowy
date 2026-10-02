@@ -30,10 +30,10 @@ module.exports = {
           light: "#F3E8FF",
         },
         cream: {
-          DEFAULT: "#FFFDF9",
-          dark: "#EDE7DE",
+          DEFAULT: "#F7F8FA",
+          dark: "#ECEEF2",
           card: "#FFFFFF",
-          border: "#F0EAE1",
+          border: "#E2E5EB",
         },
         ink: {
           DEFAULT: "#2D3748",
@@ -57,8 +57,8 @@ module.exports = {
         "tactile-sunny": "0 5px 0 #E5A817",
         "tactile-blueberry": "0 5px 0 #3B82F6",
         "tactile-grape": "0 5px 0 #A855F7",
-        "tactile-card": "0 6px 0 #EDE7DE",
-        "tactile-card-hover": "0 9px 0 #EDE7DE",
+        "tactile-card": "0 6px 0 #E2E5EB",
+        "tactile-card-hover": "0 9px 0 #E2E5EB",
         "tactile-island": "0 10px 30px rgba(0, 0, 0, 0.25), 0 4px 0 #1E293B",
       },
       animation: {

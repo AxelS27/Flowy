@@ -57,6 +57,8 @@ export function MainAppView() {
       setMascotState("tinkering");
     } else if (islandState === "completed") {
       setMascotState("celebrating");
+    } else if (islandState === "failed") {
+      setMascotState("upset");
     } else {
       setMascotState("idle");
     }
@@ -218,7 +220,7 @@ export function MainAppView() {
       <TitleBar isListening={islandState === "listening"} />
 
       {/* Main Workspace Canvas (Full Width) */}
-      <main className="flex-1 overflow-y-auto p-6 flex flex-col">
+      <main className={`flex-1 overflow-y-auto flex flex-col ${!editingRoutine && activeScreen === "home" ? "flowy-home-viewport" : "p-6"}`}>
         {editingRoutine ? (
           <RoutineEditor
             routine={editingRoutine}
@@ -243,7 +245,7 @@ export function MainAppView() {
         ) : activeScreen === "lab" ? (
           <div className="space-y-6 max-w-4xl mx-auto w-full">
             {/* Top Bar with Back to Home */}
-            <div className="flex items-center justify-between pb-3 border-b-2 border-dashed border-cream-border">
+            <div className="flowy-sky-accent flex items-center justify-between gap-3 px-4 py-3">
               <button
                 onClick={() => {
                   sound.playPop(480);
@@ -272,7 +274,7 @@ export function MainAppView() {
         ) : (
           <div className="space-y-6 max-w-5xl mx-auto w-full">
             {/* Workspace Header: Back to Home + Title + Search + Create */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b-2 border-dashed border-cream-border">
+            <div className="flowy-sky-accent flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 py-3">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
@@ -313,7 +315,7 @@ export function MainAppView() {
                   icon={<Plus size={15} strokeWidth={3} />}
                   onClick={handleCreateNewRoutine}
                 >
-                  + New Routine
+                  New Routine
                 </PushButton>
 
                 {/* Sound toggle button */}
@@ -377,7 +379,7 @@ export function MainAppView() {
             </motion.div>
 
             {sortedRoutines.length === 0 && (
-              <div className="p-12 text-center bg-cream-card rounded-3xl border-2 border-dashed border-cream-border">
+              <div className="p-12 text-center flowy-sky-accent border-dashed">
                 <Wand2 size={32} className="mx-auto text-ink-muted mb-2" />
                 <h3 className="font-extrabold text-ink text-base">
                   No matching routines found

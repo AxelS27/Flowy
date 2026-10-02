@@ -95,8 +95,6 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
   const [name, setName] = useState(routine.name);
   const [icon, setIcon] = useState(routine.icon);
   const [color, setColor] = useState<RoutineColor>(routine.color);
-  const [triggers, setTriggers] = useState<string[]>([...routine.triggers]);
-  const [newTrigger, setNewTrigger] = useState("");
 
   // Pipeline Steps
   const [steps, setSteps] = useState<RoutineStep[]>([...routine.steps]);
@@ -137,32 +135,8 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
   const isDuplicateName = existingRoutines.some(
     (r) => r.id !== routine.id && r.name.trim().toLowerCase() === trimmedName.toLowerCase()
   );
-  const isNameEmpty = trimmedName.length === 0;
-  const isTriggersEmpty = triggers.length === 0;
-  const isNameInvalid = isNameEmpty || isDuplicateName;
-
-  // Spoken trigger validation (checking duplicates within routine and across other routines)
-  const trimmedNewTrigger = newTrigger.trim();
-  const isTriggerDuplicateInCurrent =
-    trimmedNewTrigger.length > 0 &&
-    triggers.some((t) => t.toLowerCase() === trimmedNewTrigger.toLowerCase());
-
-  const conflictingRoutine =
-    trimmedNewTrigger.length > 0
-      ? existingRoutines.find(
-          (r) =>
-            r.id !== routine.id &&
-            r.triggers.some((t) => t.toLowerCase() === trimmedNewTrigger.toLowerCase())
-        )
-      : null;
-
-  const triggerErrorMessage = isTriggerDuplicateInCurrent
-    ? "This phrase is already added to this routine."
-    : conflictingRoutine
-    ? `Phrase already used in routine "${conflictingRoutine.name}".`
-    : null;
-
-  const isSaveDisabled = isNameInvalid || isTriggersEmpty;
+  const isNameInvalid = trimmedName.length === 0 || isDuplicateName;
+  const isSaveDisabled = isNameInvalid;
 
   const toggleProTray = (stepId: string) => {
     sound.playPop(520);
@@ -170,23 +144,6 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
       ...prev,
       [stepId]: !prev[stepId],
     }));
-  };
-
-  const handleAddTrigger = () => {
-    const phrase = newTrigger.trim();
-    if (!phrase) return;
-    if (isTriggerDuplicateInCurrent || conflictingRoutine) {
-      sound.playPop(350);
-      return;
-    }
-    sound.playPop(620);
-    setTriggers([...triggers, phrase]);
-    setNewTrigger("");
-  };
-
-  const handleRemoveTrigger = (idx: number) => {
-    sound.playPop(420);
-    setTriggers(triggers.filter((_, i) => i !== idx));
   };
 
   // Helper to create a new step from template
@@ -361,7 +318,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
   };
 
   const handleSaveAll = () => {
-    if (isNameInvalid || isTriggersEmpty) {
+    if (isNameInvalid) {
       sound.playPop(350);
       setStage("profile");
       return;
@@ -372,7 +329,6 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
       name: trimmedName,
       icon,
       color,
-      triggers,
       steps,
     });
   };
@@ -435,14 +391,14 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
       {/* STAGE 1: ROUTINE PROFILE SETUP */}
       {stage === "profile" ? (
         <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col items-center justify-center max-w-2xl mx-auto w-full space-y-6">
-          <div className="text-center space-y-1">
+          <div className="flowy-sky-accent w-full text-center space-y-1 px-4 py-4">
             <h2 className="text-3xl font-black text-ink tracking-tight">
               {isNew ? "Setup Routine Profile" : "Edit Routine Profile"}
             </h2>
             <p className="text-xs font-bold text-ink-muted">
               {isNew
                 ? "Choose a unique name and icon before building action blocks."
-                : "Update name, icon, and voice triggers for this routine."}
+                : "Update this routine's name, icon, and accent color."}
             </p>
           </div>
 
@@ -558,64 +514,6 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
               </div>
             </div>
 
-            <div className="pt-2 border-t-2 border-dashed border-cream-border space-y-2">
-              <label className={`text-xs font-black uppercase tracking-wider block ${isTriggersEmpty ? "text-strawberry" : "text-ink-muted"}`}>
-                Spoken Triggers 🎙️ {isTriggersEmpty && "(at least one required)"}
-              </label>
-
-              <div className="flex flex-wrap items-center gap-1.5">
-                {triggers.map((trig, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-sunny-light border border-sunny-dark text-slate-900 font-black text-xs shadow-sm"
-                  >
-                    <span>"{trig}"</span>
-                    <button
-                      onClick={() => handleRemoveTrigger(idx)}
-                      className="hover:text-strawberry font-black text-sm ml-1"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="text"
-                      value={newTrigger}
-                      onChange={(e) => setNewTrigger(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddTrigger()}
-                      placeholder="Add phrase..."
-                      className={`px-3 py-1 text-xs rounded-xl bg-cream border font-bold text-ink focus:outline-none transition-colors ${
-                        triggerErrorMessage
-                          ? "border-strawberry bg-strawberry-light/40"
-                          : "border-cream-border focus:border-sunny"
-                      }`}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddTrigger}
-                      disabled={!trimmedNewTrigger || !!triggerErrorMessage}
-                      className="px-2.5 py-1 text-xs rounded-xl bg-sunny text-slate-900 font-black border border-sunny-dark shadow-sm hover:brightness-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      + Add
-                    </button>
-                  </div>
-
-                  {triggerErrorMessage && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -2 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-1 text-[11px] font-black text-strawberry"
-                    >
-                      <AlertCircle size={13} className="flex-shrink-0" />
-                      <span>{triggerErrorMessage}</span>
-                    </motion.div>
-                  )}
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center justify-between w-full pt-2">
@@ -701,7 +599,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
         /* STAGE 2: SCRATCH PUZZLE PLAYGROUND */
         <div className="flex flex-col h-full w-full overflow-hidden">
           {/* Top Bar */}
-          <div className="h-14 bg-cream-card border-b-2 border-cream-border px-6 flex items-center justify-between flex-shrink-0">
+          <div className="h-14 bg-[#E8F7FF] border-b-2 border-[#D3EAF5] px-6 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2.5">
               {/* Direct Close Button: Red tactile button */}
               <PushButton
@@ -973,7 +871,7 @@ export const RoutineEditor: FC<RoutineEditorProps> = ({
                         When start
                       </h3>
                       <p className="text-xs font-extrabold text-amber-900 mt-0.5">
-                        Say: "{triggers[0] || trimmedName}"
+                        Run "{trimmedName}"
                       </p>
                     </div>
                   </div>

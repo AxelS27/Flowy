@@ -22,7 +22,7 @@ export function startCelebration(): void {
   safeSend(current, "celebration:start");
   if (closeTimer) clearTimeout(closeTimer);
   // Lifetime independent of Island dismissal; never leave an invisible overlay behind.
-  closeTimer = setTimeout(closeCelebrationWindow, 6500);
+  closeTimer = setTimeout(closeCelebrationWindow, 2800);
 }
 
 export function showCelebrationWindow(): void {

@@ -121,27 +121,6 @@ export const RoutineCard: FC<RoutineCardProps> = ({
           </div>
         </div>
 
-        {/* Voice Trigger Tags (Clean & to the point) */}
-        <div className="mb-3">
-          <span className="text-[10px] font-black uppercase tracking-wider text-ink-muted block mb-1">
-            🎙️ Say:
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {routine.triggers.slice(0, 3).map((trigger, idx) => (
-              <span
-                key={idx}
-                className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-xl bg-cream border border-cream-border text-ink"
-              >
-                "{trigger}"
-              </span>
-            ))}
-            {routine.triggers.length > 3 && (
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-xl bg-cream text-ink-muted">
-                +{routine.triggers.length - 3} more
-              </span>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Bottom Action Buttons */}

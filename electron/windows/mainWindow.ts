@@ -12,10 +12,10 @@ export function createMainWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1100,
     height: 760,
-    minWidth: 960,
-    minHeight: 640,
+    minWidth: 1100,
+    minHeight: 760,
     frame: false,
-    backgroundColor: "#FFFDF9",
+    backgroundColor: "#FAF8F5",
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "../preload.js"),

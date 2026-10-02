@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "Roblox_Studio": {
+      "disabled": true
+    },
+    "cloudflare": {
+      "disabled": true
+    },
+    "cloudflare-docs": {
+      "disabled": true
+    },
+    "cloudflare-bindings": {
+      "disabled": true
+    },
+    "cloudflare-builds": {
+      "disabled": true
+    },
+    "cloudflare-observability": {
+      "disabled": true
+    }
+  }
+}

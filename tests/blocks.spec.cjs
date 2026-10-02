@@ -107,10 +107,8 @@ test('delete uses Recycle Bin and confirmation cancellation stops the routine', 
 });
 
 test('editor searches, drags, configures, runs and persists a real folder block', async () => {
-  await page.getByRole('button', { name: /New Routine.*Build with Toy Blocks/ }).click();
+  await page.getByRole('button', { name: 'New routine' }).click();
   await page.getByPlaceholder(/routine name|Deep Focus|Work Mode|Morning/i).first().fill('E2E Folder');
-  await page.getByPlaceholder('Add phrase...').fill('buat folder e2e');
-  await page.getByRole('button', { name: '+ Add', exact: true }).click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   const search = page.getByPlaceholder('Search blocks...');
   await search.fill('no-such-block-e2e');

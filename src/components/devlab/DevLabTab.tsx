@@ -25,53 +25,26 @@ export const DevLabTab: FC<DevLabTabProps> = ({
   const [matchResult, setMatchResult] = useState<{
     matched: boolean;
     routineName?: string;
-    confidence?: number;
   } | null>(null);
 
   const handleTestIntent = () => {
     if (!testPhrase.trim()) return;
     sound.playPop(520);
 
-    // Simple keyword / substring similarity mock
-    const query = testPhrase.toLowerCase();
-    let bestMatch: Routine | null = null;
-    let highestScore = 0;
+    // Name-only preview, not the planned semantic Router API.
+    const query = testPhrase.trim().toLowerCase();
+    const matches = routines.filter((routine) =>
+      routine.enabled && (query.includes(routine.name.toLowerCase()) || routine.name.toLowerCase().includes(query))
+    );
 
-    for (const r of routines) {
-      for (const t of r.triggers) {
-        if (query.includes(t.toLowerCase()) || t.toLowerCase().includes(query)) {
-          bestMatch = r;
-          highestScore = 0.94;
-          break;
-        }
-      }
-      if (bestMatch) break;
-    }
-
-    if (!bestMatch) {
-      // Fallback matching first word
-      const firstWord = query.split(" ")[0];
-      for (const r of routines) {
-        if (r.name.toLowerCase().includes(firstWord)) {
-          bestMatch = r;
-          highestScore = 0.81;
-          break;
-        }
-      }
-    }
-
-    if (bestMatch) {
+    if (matches.length === 1) {
       setMatchResult({
         matched: true,
-        routineName: bestMatch.name,
-        confidence: highestScore,
+        routineName: matches[0].name,
       });
       sound.playFanfare();
     } else {
-      setMatchResult({
-        matched: false,
-        confidence: 0.35,
-      });
+      setMatchResult({ matched: false });
       sound.playPop(350);
     }
   };
@@ -87,7 +60,7 @@ export const DevLabTab: FC<DevLabTabProps> = ({
               Developer & Testing Playground (Dev Tab)
             </h3>
             <p className="text-xs font-bold text-amber-800">
-              This tab contains simulation buttons for testing the Dynamic Island and voice triggers. It is isolated from the main UI and can be removed with one click when no longer needed.
+              This tab contains simulations for the Dynamic Island, wake word, and routine names. It is isolated from the main UI and can be removed when no longer needed.
             </p>
           </div>
         </div>
@@ -160,10 +133,10 @@ export const DevLabTab: FC<DevLabTabProps> = ({
           </div>
           <div>
             <h4 className="font-black text-ink text-base">
-              Local Intent Matcher Sandbox
+              Routine Name Preview
             </h4>
             <p className="text-xs font-bold text-ink-muted">
-              Test how natural spoken sentences resolve to your configured routines.
+              Preview simple name matching. Semantic routing is not connected yet.
             </p>
           </div>
         </div>
@@ -174,7 +147,7 @@ export const DevLabTab: FC<DevLabTabProps> = ({
             value={testPhrase}
             onChange={(e) => setTestPhrase(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleTestIntent()}
-            placeholder="Type a spoken sentence (e.g. 'tolong mulai kerja dong' or 'let's play')..."
+            placeholder="Type a routine name..."
             className="flex-1 text-xs font-bold px-4 py-2.5 rounded-2xl bg-cream border-2 border-cream-border focus:border-mint focus:outline-none text-ink"
           />
           <PushButton
@@ -204,12 +177,9 @@ export const DevLabTab: FC<DevLabTabProps> = ({
               <span>
                 {matchResult.matched
                   ? `Matched Routine: "${matchResult.routineName}"`
-                  : "No routine matched (Confidence below 0.75 threshold)"}
+                  : "No unique enabled routine name matched"}
               </span>
             </div>
-            <span className="font-mono text-[11px] px-2 py-0.5 rounded-lg bg-white/80 border">
-              Confidence: {Math.round((matchResult.confidence || 0) * 100)}%
-            </span>
           </div>
         )}
       </div>

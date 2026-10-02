@@ -22,8 +22,7 @@ export function useRoutines() {
     return routines.filter((r) => {
       const matchesSearch =
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.triggers.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        !!r.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCategory =
         selectedCategory === "all" || r.category === (selectedCategory as RoutineCategory);

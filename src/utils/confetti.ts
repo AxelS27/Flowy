@@ -17,6 +17,8 @@ export function fireCelebrationConfetti() {
       colors,
       shapes: ["circle", "square"],
       scalar: 1.1,
+      ticks: 100,
+      gravity: 1.25,
     });
 
     setTimeout(() => {
@@ -26,6 +28,8 @@ export function fireCelebrationConfetti() {
         spread: 55,
         origin: { x: 0.1, y: 0.8 },
         colors,
+        ticks: 100,
+        gravity: 1.25,
       });
       confetti({
         particleCount: 25,
@@ -33,6 +37,8 @@ export function fireCelebrationConfetti() {
         spread: 55,
         origin: { x: 0.9, y: 0.8 },
         colors,
+        ticks: 100,
+        gravity: 1.25,
       });
     }, 150);
   } catch (e) {

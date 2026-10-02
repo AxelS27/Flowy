@@ -13,7 +13,7 @@ palette is unchanged.
 - Celebration uses a separate transparent, always-on-top, non-focusable window
   covering the primary display. Bursts spread from the notch and both screen
   edges over other application windows. The overlay is entirely click-through,
-  closes automatically after 6.5 seconds and respects reduced-motion preferences.
+  closes automatically after 2.8 seconds and respects reduced-motion preferences.
   It cannot render over Windows secure-desktop/UAC prompts.
 - Top-origin expansion with reduced-motion support.
 - Execution checklist stays visible for at least 2 seconds, followed by a

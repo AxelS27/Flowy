@@ -19,7 +19,7 @@ export function CelebrationOverlayView() {
       stop(); // Repeated requests restart, not stack unbounded particle storms.
       if (motion.matches) return;
       const colors = ["#64a8ff", "#62d98b", "#af9dff", "#ffc857", "#ff8583", "#ffffff"];
-      const defaults = { colors, ticks: 230, gravity: .9, decay: .94, scalar: 1.15, disableForReducedMotion: true };
+      const defaults = { colors, ticks: 100, gravity: 1.25, decay: .91, scalar: 1.05, disableForReducedMotion: true };
       // Burst down and out from the notch, then cannons across both desktop edges.
       void fire({ ...defaults, particleCount: 140, angle: 270, spread: 145,
         startVelocity: 42, origin: { x: .5, y: .015 } });
@@ -29,12 +29,6 @@ export function CelebrationOverlayView() {
         void fire({ ...defaults, particleCount: 75, angle: 125, spread: 65,
           startVelocity: 55, origin: { x: .97, y: .55 } });
       }, 180));
-      [0.15, .32, .5, .68, .85].forEach((x, index) => {
-        timers.push(setTimeout(() => {
-          void fire({ ...defaults, particleCount: 22, angle: 270, spread: 95,
-            startVelocity: 20, gravity: .7, scalar: .9, origin: { x, y: .01 } });
-        }, 650 + index * 90));
-      });
     };
     const unsubscribe = api.onCelebrationStart(celebrate);
     motion.addEventListener("change", stop);
